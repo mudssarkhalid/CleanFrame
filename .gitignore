@@ -42,3 +42,12 @@ PP*.woff2
 /explorations/
 /docs/research/
 /docs/articles/
+
+# Editor, OS, and temporary files
+.vscode/
+.idea/
+.gemini/
+*.swp
+*~
+*.log
+
