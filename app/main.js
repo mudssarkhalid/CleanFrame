@@ -228,13 +228,13 @@
   document.body.appendChild(measureSpan);
   function homeFont() { return S.shown && S.shown.font || 'manrope'; }
   function fontRole(id, role, size) {
-    var f = FONTS[id], serif = id === 'newsreader';
+    var f = FONTS[id] || FONTS.manrope, serif = id === 'newsreader';
     return { family: f.family,
       weight: role === 'display' ? f.display : role === 'clock' ? f.clock : serif ? 400 : f.ui,
       opsz: serif ? role === 'display' ? 72 : role === 'clock' ? 48 : role === 'ui' && (!size || size === 28) ? 28 : 36 : 0 };
   }
   function measureFace(id, faces) {
-    var result = { roles: {}, digits: [], digitCell: 0 }, roles = { display: [88, 76, 56], clock: [48], primary: [30, 32, 34, 36, 40], ui: [28, 30, 48] };
+    var result = { roles: {}, digits: [], digitCell: 0 }, roles = { display: [88, 76, 56], clock: [48], primary: [22, 25, 26, 30, 32, 34, 36, 40], ui: [28, 30, 48] };
     var face = id === 'newsreader' ? faces[0][0] : null, original = face ? face.variationSettings : '', r, widths, min, max;
     Object.keys(roles).forEach(function (role) {
       result.roles[role] = {};
@@ -324,7 +324,9 @@
   function fontShift(role, size) {
     var id = homeFont(), base = fontMetrics.manrope, metrics = fontMetrics[id], a, b;
     if (id === 'manrope' || !base || !metrics) return 0;
+    if (!base.roles || !base.roles[role] || !metrics.roles || !metrics.roles[role]) return 0;
     a = base.roles[role][size]; b = metrics.roles[role][size];
+    if (!a || !b) return 0;
     return (a.ascent - a.descent - a.cap - b.ascent + b.descent + b.cap) / 2;
   }
   function textWidth(text, size, weight, spacing, role) {
@@ -1310,7 +1312,7 @@
     write(c, label || 'TV Inputs');
     ensureSel();
   }
-  function detailBack() { cancelLook(); S.err = null; pop(); }
+  function detailBack() { restoreLook(); S.err = null; pop(); }
   function detailOk(t, item) {
     var patch = {}, error = S.lookError;
     if (item.action === 'settings.back') { detailBack(); return; }
@@ -1480,15 +1482,15 @@
     else stage.style.removeProperty('--clock-ink');
     if (!adaptive && shown.dockClockInk) stage.style.setProperty('--dock-clock-ink', shown.dockClockInk);
     else stage.style.removeProperty('--dock-clock-ink');
-    applyHomeFont();
-    if (!sheet) renderHome(t);
-    renderSheet(t, sheet);
-    renderAppearance(t);
-    renderFocusStatus(t);
+    try { applyHomeFont(); } catch (e) { if (window.console && console.error) console.error(e); }
+    try { if (!sheet) renderHome(t); } catch (e) { if (window.console && console.error) console.error(e); }
+    try { renderSheet(t, sheet); } catch (e) { if (window.console && console.error) console.error(e); }
+    try { renderAppearance(t); } catch (e) { if (window.console && console.error) console.error(e); }
+    try { renderFocusStatus(t); } catch (e) { if (window.console && console.error) console.error(e); }
   }
 
   function applyHomeFont() {
-    var id = homeFont(), f = FONTS[id], primary = fontRole(id, 'primary'), ui = fontRole(id, 'ui'), metrics = fontMetrics[id];
+    var id = homeFont(), f = FONTS[id] || FONTS.manrope, primary = fontRole(id, 'primary'), ui = fontRole(id, 'ui'), metrics = fontMetrics[id];
     if (appliedFont === id && appliedFontMetrics === metrics) return;
     appliedFont = id; appliedFontMetrics = metrics;
     var values = { 'display-family': '"' + f.family + '"', 'ui-family': '"' + ui.family + '"', 'primary-family': '"' + primary.family + '"', 'display-weight': f.display, 'ui-weight': ui.weight, 'primary-weight': primary.weight, 'clock-weight': f.clock,
